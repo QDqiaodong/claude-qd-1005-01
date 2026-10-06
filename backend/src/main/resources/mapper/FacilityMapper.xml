@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utility.tunnel.mapper.FacilityMapper">
+
+    <resultMap id="FacilityResult" type="com.utility.tunnel.entity.Facility">
+        <id column="id" property="id"/>
+        <result column="segment_id" property="segmentId"/>
+        <result column="facility_type" property="facilityType"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, segment_id, facility_type, status, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO facility (segment_id, facility_type, status, created_at)
+        VALUES (#{segmentId}, #{facilityType}, #{status}, UTC_TIMESTAMP())
+    </insert>
+
+    <select id="findBySegmentId" resultMap="FacilityResult">
+        SELECT <include refid="Base_Column_List"/> FROM facility
+        WHERE segment_id = #{segmentId} ORDER BY id
+    </select>
+
+    <select id="selectById" resultMap="FacilityResult">
+        SELECT <include refid="Base_Column_List"/> FROM facility WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="FacilityResult">
+        SELECT <include refid="Base_Column_List"/> FROM facility ORDER BY id
+    </select>
+
+    <update id="updateStatus">
+        UPDATE facility SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM facility
+    </select>
+
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) FROM facility WHERE status = #{status}
+    </select>
+
+</mapper>

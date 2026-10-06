@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utility.tunnel.mapper.PatrolPointMapper">
+
+    <resultMap id="PatrolResult" type="com.utility.tunnel.entity.PatrolPoint">
+        <id column="id" property="id"/>
+        <result column="segment_id" property="segmentId"/>
+        <result column="point_code" property="pointCode"/>
+        <result column="location" property="location"/>
+        <result column="last_patrol_at" property="lastPatrolAt"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, segment_id, point_code, location, last_patrol_at, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO patrol_point (segment_id, point_code, location, last_patrol_at, created_at)
+        VALUES (#{segmentId}, #{pointCode}, #{location}, #{lastPatrolAt}, UTC_TIMESTAMP())
+    </insert>
+
+    <select id="findBySegmentId" resultMap="PatrolResult">
+        SELECT <include refid="Base_Column_List"/> FROM patrol_point
+        WHERE segment_id = #{segmentId} ORDER BY id
+    </select>
+
+    <select id="selectById" resultMap="PatrolResult">
+        SELECT <include refid="Base_Column_List"/> FROM patrol_point WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultMap="PatrolResult">
+        SELECT <include refid="Base_Column_List"/> FROM patrol_point ORDER BY id
+    </select>
+
+    <update id="updateLastPatrolAt">
+        UPDATE patrol_point SET last_patrol_at = #{lastPatrolAt} WHERE id = #{id}
+    </update>
+
+</mapper>

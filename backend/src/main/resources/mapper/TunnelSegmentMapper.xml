@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utility.tunnel.mapper.TunnelSegmentMapper">
+
+    <resultMap id="SegmentResult" type="com.utility.tunnel.entity.TunnelSegment">
+        <id column="id" property="id"/>
+        <result column="seg_code" property="segCode"/>
+        <result column="seg_name" property="segName"/>
+        <result column="shape" property="shape"/>
+        <result column="length_m" property="lengthM"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, seg_code, seg_name, shape, length_m, status, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tunnel_segment (seg_code, seg_name, shape, length_m, status, created_at)
+        VALUES (#{segCode}, #{segName}, #{shape}, #{lengthM}, #{status}, UTC_TIMESTAMP())
+    </insert>
+
+    <select id="findAll" resultMap="SegmentResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tunnel_segment
+        ORDER BY id
+    </select>
+
+    <select id="findByStatus" resultMap="SegmentResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tunnel_segment
+        WHERE status = #{status}
+        ORDER BY id
+    </select>
+
+    <select id="selectById" resultMap="SegmentResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tunnel_segment
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdForUpdate" resultMap="SegmentResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tunnel_segment
+        WHERE id = #{id}
+        FOR UPDATE
+    </select>
+
+    <update id="updateStatus">
+        UPDATE tunnel_segment SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM tunnel_segment
+    </select>
+
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) FROM tunnel_segment WHERE status = #{status}
+    </select>
+
+    <!-- ===================================================================
+         嵌套 resultMap：一条 SQL 带出舱段下的 入廊管线 / 巡检点 / 附属设备，
+         通过三个 <collection> 各自引用独立的子 resultMap 完成对象聚合。
+         =================================================================== -->
+    <resultMap id="SegmentWithChildren" type="com.utility.tunnel.entity.SegmentWithChildren">
+        <id column="s_id" property="id"/>
+        <result column="s_seg_code" property="segCode"/>
+        <result column="s_seg_name" property="segName"/>
+        <result column="s_shape" property="shape"/>
+        <result column="s_length_m" property="lengthM"/>
+        <result column="s_status" property="status"/>
+        <collection property="pipelines" ofType="com.utility.tunnel.entity.Pipeline"
+                    resultMap="PipelineInline"/>
+        <collection property="patrolPoints" ofType="com.utility.tunnel.entity.PatrolPoint"
+                    resultMap="PatrolInline"/>
+        <collection property="facilities" ofType="com.utility.tunnel.entity.Facility"
+                    resultMap="FacilityInline"/>
+    </resultMap>
+
+    <resultMap id="PipelineInline" type="com.utility.tunnel.entity.Pipeline">
+        <id column="p_id" property="id"/>
+        <result column="p_segment_id" property="segmentId"/>
+        <result column="p_line_type" property="lineType"/>
+        <result column="p_diameter_mm" property="diameterMm"/>
+        <result column="p_pressure_level" property="pressureLevel"/>
+        <result column="p_status" property="status"/>
+    </resultMap>
+
+    <resultMap id="PatrolInline" type="com.utility.tunnel.entity.PatrolPoint">
+        <id column="pt_id" property="id"/>
+        <result column="pt_segment_id" property="segmentId"/>
+        <result column="pt_point_code" property="pointCode"/>
+        <result column="pt_location" property="location"/>
+        <result column="pt_last_patrol_at" property="lastPatrolAt"/>
+    </resultMap>
+
+    <resultMap id="FacilityInline" type="com.utility.tunnel.entity.Facility">
+        <id column="f_id" property="id"/>
+        <result column="f_segment_id" property="segmentId"/>
+        <result column="f_facility_type" property="facilityType"/>
+        <result column="f_status" property="status"/>
+    </resultMap>
+
+    <select id="selectWithChildren" resultMap="SegmentWithChildren">
+        SELECT
+            s.id            AS s_id,
+            s.seg_code      AS s_seg_code,
+            s.seg_name      AS s_seg_name,
+            s.shape         AS s_shape,
+            s.length_m      AS s_length_m,
+            s.status        AS s_status,
+            p.id            AS p_id,
+            p.segment_id    AS p_segment_id,
+            p.line_type     AS p_line_type,
+            p.diameter_mm   AS p_diameter_mm,
+            p.pressure_level AS p_pressure_level,
+            p.status        AS p_status,
+            pt.id           AS pt_id,
+            pt.segment_id   AS pt_segment_id,
+            pt.point_code   AS pt_point_code,
+            pt.location     AS pt_location,
+            pt.last_patrol_at AS pt_last_patrol_at,
+            f.id            AS f_id,
+            f.segment_id    AS f_segment_id,
+            f.facility_type AS f_facility_type,
+            f.status        AS f_status
+        FROM tunnel_segment s
+        LEFT JOIN pipeline p ON p.segment_id = s.id
+        LEFT JOIN patrol_point pt ON pt.segment_id = s.id
+        LEFT JOIN facility f ON f.segment_id = s.id
+        WHERE s.id = #{id}
+    </select>
+
+</mapper>

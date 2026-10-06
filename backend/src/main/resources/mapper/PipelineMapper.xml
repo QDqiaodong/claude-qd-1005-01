@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utility.tunnel.mapper.PipelineMapper">
+
+    <resultMap id="PipelineResult" type="com.utility.tunnel.entity.Pipeline">
+        <id column="id" property="id"/>
+        <result column="segment_id" property="segmentId"/>
+        <result column="line_type" property="lineType"/>
+        <result column="diameter_mm" property="diameterMm"/>
+        <result column="pressure_level" property="pressureLevel"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, segment_id, line_type, diameter_mm, pressure_level, status, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO pipeline (segment_id, line_type, diameter_mm, pressure_level, status, created_at)
+        VALUES (#{segmentId}, #{lineType}, #{diameterMm}, #{pressureLevel}, #{status}, UTC_TIMESTAMP())
+    </insert>
+
+    <select id="findAll" resultMap="PipelineResult">
+        SELECT <include refid="Base_Column_List"/> FROM pipeline ORDER BY id
+    </select>
+
+    <select id="findBySegmentId" resultMap="PipelineResult">
+        SELECT <include refid="Base_Column_List"/> FROM pipeline
+        WHERE segment_id = #{segmentId} ORDER BY id
+    </select>
+
+    <select id="selectById" resultMap="PipelineResult">
+        SELECT <include refid="Base_Column_List"/> FROM pipeline WHERE id = #{id}
+    </select>
+
+    <select id="countBySegmentAndType" resultType="int">
+        SELECT COUNT(*) FROM pipeline
+        WHERE segment_id = #{segmentId} AND line_type = #{lineType}
+    </select>
+
+</mapper>

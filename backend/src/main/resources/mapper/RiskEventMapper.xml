@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.utility.tunnel.mapper.RiskEventMapper">
+
+    <resultMap id="RiskEventResult" type="com.utility.tunnel.entity.RiskEvent">
+        <id column="id" property="id"/>
+        <result column="segment_id" property="segmentId"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="severity" property="severity"/>
+        <result column="description" property="description"/>
+        <result column="found_at" property="foundAt"/>
+        <result column="status" property="status"/>
+        <result column="handle_note" property="handleNote"/>
+        <result column="resolved_by" property="resolvedBy"/>
+        <result column="resolved_at" property="resolvedAt"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <resultMap id="RiskEventViewResult" type="com.utility.tunnel.entity.RiskEventView"
+               extends="RiskEventResult">
+        <result column="seg_code" property="segCode"/>
+        <result column="seg_name" property="segName"/>
+        <result column="source_name" property="sourceName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, segment_id, source_type, source_id, severity, description, found_at, status,
+        handle_note, resolved_by, resolved_at, created_at
+    </sql>
+
+    <!-- 列表视图公共 SELECT：关联舱段与发现对象（巡检点 / 附属设备二选一） -->
+    <sql id="View_From">
+        FROM risk_event r
+        JOIN tunnel_segment s ON s.id = r.segment_id
+        LEFT JOIN patrol_point p ON r.source_type = '巡检点' AND p.id = r.source_id
+        LEFT JOIN facility f ON r.source_type = '附属设备' AND f.id = r.source_id
+    </sql>
+
+    <sql id="View_Columns">
+        r.id, r.segment_id, r.source_type, r.source_id, r.severity, r.description, r.found_at,
+        r.status, r.handle_note, r.resolved_by, r.resolved_at, r.created_at,
+        s.seg_code, s.seg_name,
+        COALESCE(p.point_code, f.facility_type) AS source_name
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO risk_event (segment_id, source_type, source_id, severity, description, found_at,
+                                status, handle_note, resolved_by, resolved_at, created_at)
+        VALUES (#{segmentId}, #{sourceType}, #{sourceId}, #{severity}, #{description}, #{foundAt},
+                #{status}, #{handleNote}, #{resolvedBy}, #{resolvedAt}, UTC_TIMESTAMP())
+    </insert>
+
+    <select id="selectById" resultMap="RiskEventResult">
+        SELECT <include refid="Base_Column_List"/> FROM risk_event WHERE id = #{id}
+    </select>
+
+    <select id="findByFilter" resultMap="RiskEventViewResult">
+        SELECT <include refid="View_Columns"/>
+        <include refid="View_From"/>
+        <where>
+            <if test="segmentId != null">AND r.segment_id = #{segmentId}</if>
+            <if test="status != null and status != ''">AND r.status = #{status}</if>
+        </where>
+        ORDER BY r.id DESC
+    </select>
+
+    <select id="findViewById" resultMap="RiskEventViewResult">
+        SELECT <include refid="View_Columns"/>
+        <include refid="View_From"/>
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="countUnresolvedBySegment" resultType="int">
+        SELECT COUNT(*) FROM risk_event
+        WHERE segment_id = #{segmentId} AND status != '已解除'
+    </select>
+
+    <select id="findLatestUnresolved" resultMap="RiskEventViewResult">
+        SELECT <include refid="View_Columns"/>
+        <include refid="View_From"/>
+        WHERE r.segment_id = #{segmentId} AND r.status != '已解除'
+        ORDER BY r.id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 状态条件写在 WHERE 里：并发或重复提交时影响 0 行，由业务层报错，不留半条状态 -->
+    <update id="advance">
+        UPDATE risk_event
+        SET status = '处理中'
+        <if test="handleNote != null and handleNote != ''">
+            , handle_note = #{handleNote}
+        </if>
+        WHERE id = #{id} AND status = '待处置'
+    </update>
+
+    <update id="resolve">
+        UPDATE risk_event
+        SET status = '已解除',
+            handle_note = #{handleNote},
+            resolved_by = #{resolvedBy},
+            resolved_at = #{resolvedAt}
+        WHERE id = #{id} AND status IN ('待处置', '处理中')
+    </update>
+
+</mapper>
