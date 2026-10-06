@@ -8,17 +8,27 @@
         <result column="line_type" property="lineType"/>
         <result column="diameter_mm" property="diameterMm"/>
         <result column="pressure_level" property="pressureLevel"/>
+        <result column="occupancy" property="occupancy"/>
         <result column="status" property="status"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
 
+    <resultMap id="UsageResult" type="com.utility.tunnel.entity.SegmentUsage">
+        <id column="segment_id" property="segmentId"/>
+        <result column="seg_code" property="segCode"/>
+        <result column="seg_name" property="segName"/>
+        <result column="capacity" property="capacity"/>
+        <result column="pipeline_count" property="pipelineCount"/>
+        <result column="used" property="used"/>
+    </resultMap>
+
     <sql id="Base_Column_List">
-        id, segment_id, line_type, diameter_mm, pressure_level, status, created_at
+        id, segment_id, line_type, diameter_mm, pressure_level, occupancy, status, created_at
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO pipeline (segment_id, line_type, diameter_mm, pressure_level, status, created_at)
-        VALUES (#{segmentId}, #{lineType}, #{diameterMm}, #{pressureLevel}, #{status}, UTC_TIMESTAMP())
+        INSERT INTO pipeline (segment_id, line_type, diameter_mm, pressure_level, occupancy, status, created_at)
+        VALUES (#{segmentId}, #{lineType}, #{diameterMm}, #{pressureLevel}, #{occupancy}, #{status}, UTC_TIMESTAMP())
     </insert>
 
     <select id="findAll" resultMap="PipelineResult">
@@ -37,6 +47,28 @@
     <select id="countBySegmentAndType" resultType="int">
         SELECT COUNT(*) FROM pipeline
         WHERE segment_id = #{segmentId} AND line_type = #{lineType}
+    </select>
+
+    <select id="sumOccupancyBySegment" resultType="int">
+        SELECT COALESCE(SUM(occupancy), 0) FROM pipeline
+        WHERE segment_id = #{segmentId}
+    </select>
+
+    <!-- 舱段用量汇总：已用容量实时 SUM 自 pipeline 表，刷新后与已存管线一致 -->
+    <select id="findUsage" resultMap="UsageResult">
+        SELECT s.id AS segment_id,
+               s.seg_code,
+               s.seg_name,
+               s.capacity,
+               COUNT(p.id) AS pipeline_count,
+               COALESCE(SUM(p.occupancy), 0) AS used
+        FROM tunnel_segment s
+        LEFT JOIN pipeline p ON p.segment_id = s.id
+        <if test="segmentId != null">
+            WHERE s.id = #{segmentId}
+        </if>
+        GROUP BY s.id, s.seg_code, s.seg_name, s.capacity
+        ORDER BY s.id
     </select>
 
 </mapper>

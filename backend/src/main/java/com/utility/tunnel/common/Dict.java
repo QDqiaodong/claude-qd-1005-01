@@ -211,6 +211,27 @@ public final class Dict {
     public static final List<String> SEGMENT_SHAPES = List.of("圆形", "矩形", "马蹄形");
     public static final List<String> SEGMENT_STATUSES = List.of("运营", "维护", "停用");
 
+    // ---------------- 综合管廊：舱段容量与规格兼容规则 ----------------
+    // 本次敷设占用（容量单位）= 管线类型基础占用 + 压力级制附加占用；
+    // 舱段已用容量 = 舱内全部管线占用之和，剩余容量 = 舱段容量 - 已用容量。
+    /** 管线类型基础占用（容量单位） */
+    private static final Map<String, Integer> LINE_TYPE_BASE_OCCUPANCY = Map.of(
+            "电力", 2,
+            "通信", 1,
+            "给水", 2,
+            "排水", 3,
+            "热力", 3,
+            "燃气", 3);
+
+    /** 压力级制附加占用：高压 +2 / 中压 +1 / 低压（或未填）+0 */
+    private static final Map<String, Integer> PRESSURE_EXTRA_OCCUPANCY = Map.of(
+            "高压", 2,
+            "中压", 1,
+            "低压", 0);
+
+    /** 规则「压力级制适配」：压力管线（给水 / 热力 / 燃气）必须填写压力级制 */
+    public static final List<String> PRESSURE_REQUIRED_TYPES = List.of("给水", "热力", "燃气");
+
     // ---------------- 综合管廊：巡检异常 / 风险事件 ----------------
     /** 发现对象类型：风险事件只能从巡检点或附属设备登记 */
     public static final List<String> RISK_SOURCE_TYPES = List.of("巡检点", "附属设备");
@@ -431,6 +452,15 @@ public final class Dict {
 
     public static boolean isValidSegmentStatus(String status) {
         return status != null && !status.isBlank() && SEGMENT_STATUSES.contains(status);
+    }
+
+    /** 本次敷设占用容量 = 管线类型基础占用 + 压力级制附加（压力未填按 0 计） */
+    public static int pipelineOccupancy(String lineType, String pressureLevel) {
+        int base = LINE_TYPE_BASE_OCCUPANCY.getOrDefault(lineType, 1);
+        int extra = (pressureLevel == null || pressureLevel.isBlank())
+                ? 0
+                : PRESSURE_EXTRA_OCCUPANCY.getOrDefault(pressureLevel, 0);
+        return base + extra;
     }
 
     public static boolean isValidRiskSourceType(String sourceType) {

@@ -30,6 +30,9 @@ public class TunnelSegment {
     /** 舱段长度（米），必须大于 0 */
     private Double lengthM;
 
+    /** 舱段容量（容量单位），必须大于 0；已用容量 = 舱内管线占用之和 */
+    private Integer capacity;
+
     /** 运营 / 维护 / 停用 */
     private String status;
 

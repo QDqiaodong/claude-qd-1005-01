@@ -35,6 +35,7 @@ export default {
 
   // ---------------- 入廊管线 ----------------
   listPipelines: (segmentId) => call(http.get('/pipelines', params(segmentId ? { segmentId } : {}))),
+  pipelineUsage: (segmentId) => call(http.get('/pipelines/usage', params(segmentId ? { segmentId } : {}))),
   createPipeline: (d) => call(http.post('/pipelines', d)),
 
   // ---------------- 巡检点 ----------------

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.utility.tunnel.common.ApiResponse;
 import com.utility.tunnel.entity.Pipeline;
+import com.utility.tunnel.entity.SegmentUsage;
 import com.utility.tunnel.service.PipelineService;
 
 /** 入廊管线接口 */
@@ -28,6 +29,12 @@ public class PipelineController {
     @GetMapping
     public ApiResponse<List<Pipeline>> list(@RequestParam(required = false) Long segmentId) {
         return ApiResponse.success(pipelineService.list(segmentId));
+    }
+
+    /** 舱段容量用量汇总：已用 / 剩余 / 总容量，供列表汇总与新建表单提示 */
+    @GetMapping("/usage")
+    public ApiResponse<List<SegmentUsage>> usage(@RequestParam(required = false) Long segmentId) {
+        return ApiResponse.success(pipelineService.usage(segmentId));
     }
 
     @GetMapping("/{id}")

@@ -32,6 +32,9 @@ public class Pipeline {
     /** 压力级制：高压 / 中压 / 低压 */
     private String pressureLevel;
 
+    /** 本次敷设占用容量（落库时按管线类型 + 压力级制规则计算，此后不变） */
+    private Integer occupancy;
+
     /** 在用 / 检修 */
     private String status;
 

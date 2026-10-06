@@ -63,6 +63,9 @@ public class TunnelSegmentService {
         if (input.getLengthM() == null || input.getLengthM() <= 0) {
             throw new BizException("舱段长度必须大于 0");
         }
+        if (input.getCapacity() == null || input.getCapacity() <= 0) {
+            throw new BizException("舱段容量必须大于 0");
+        }
         if (input.getShape() == null || !Dict.isValidSegmentShape(input.getShape())) {
             throw new BizException("断面形状不合法，应为：圆形 / 矩形 / 马蹄形");
         }
@@ -74,6 +77,7 @@ public class TunnelSegmentService {
         s.setSegName(input.getSegName() == null ? "" : input.getSegName().trim());
         s.setShape(input.getShape());
         s.setLengthM(input.getLengthM());
+        s.setCapacity(input.getCapacity());
         s.setStatus(input.getStatus());
         segmentMapper.insert(s);
         return s;

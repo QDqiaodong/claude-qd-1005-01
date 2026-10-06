@@ -8,17 +8,18 @@
         <result column="seg_name" property="segName"/>
         <result column="shape" property="shape"/>
         <result column="length_m" property="lengthM"/>
+        <result column="capacity" property="capacity"/>
         <result column="status" property="status"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, seg_code, seg_name, shape, length_m, status, created_at
+        id, seg_code, seg_name, shape, length_m, capacity, status, created_at
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tunnel_segment (seg_code, seg_name, shape, length_m, status, created_at)
-        VALUES (#{segCode}, #{segName}, #{shape}, #{lengthM}, #{status}, UTC_TIMESTAMP())
+        INSERT INTO tunnel_segment (seg_code, seg_name, shape, length_m, capacity, status, created_at)
+        VALUES (#{segCode}, #{segName}, #{shape}, #{lengthM}, #{capacity}, #{status}, UTC_TIMESTAMP())
     </insert>
 
     <select id="findAll" resultMap="SegmentResult">
@@ -69,6 +70,7 @@
         <result column="s_seg_name" property="segName"/>
         <result column="s_shape" property="shape"/>
         <result column="s_length_m" property="lengthM"/>
+        <result column="s_capacity" property="capacity"/>
         <result column="s_status" property="status"/>
         <collection property="pipelines" ofType="com.utility.tunnel.entity.Pipeline"
                     resultMap="PipelineInline"/>
@@ -84,6 +86,7 @@
         <result column="p_line_type" property="lineType"/>
         <result column="p_diameter_mm" property="diameterMm"/>
         <result column="p_pressure_level" property="pressureLevel"/>
+        <result column="p_occupancy" property="occupancy"/>
         <result column="p_status" property="status"/>
     </resultMap>
 
@@ -109,12 +112,14 @@
             s.seg_name      AS s_seg_name,
             s.shape         AS s_shape,
             s.length_m      AS s_length_m,
+            s.capacity      AS s_capacity,
             s.status        AS s_status,
             p.id            AS p_id,
             p.segment_id    AS p_segment_id,
             p.line_type     AS p_line_type,
             p.diameter_mm   AS p_diameter_mm,
             p.pressure_level AS p_pressure_level,
+            p.occupancy     AS p_occupancy,
             p.status        AS p_status,
             pt.id           AS pt_id,
             pt.segment_id   AS pt_segment_id,
