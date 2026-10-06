@@ -35,6 +35,12 @@ export default {
 
   // ---------------- 入廊管线 ----------------
   listPipelines: (segmentId) => call(http.get('/pipelines', params(segmentId ? { segmentId } : {}))),
+  // 全部舱段用量（舱容/已用/剩余/逐条占用）
+  pipelineCapacities: () => call(http.get('/pipelines/capacities')),
+  // 指定舱段用量（新建表单容量面板）
+  pipelineCapacity: (segmentId) => call(http.get('/pipelines/capacity', params({ segmentId }))),
+  // 提交前容量与规格兼容预检（不落库）
+  checkPipeline: (d) => call(http.post('/pipelines/check', d)),
   createPipeline: (d) => call(http.post('/pipelines', d)),
 
   // ---------------- 巡检点 ----------------

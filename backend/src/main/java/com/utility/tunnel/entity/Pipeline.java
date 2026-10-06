@@ -10,8 +10,10 @@ import lombok.Setter;
  * 入廊管线：敷设在某舱段内的市政管线。
  *
  * <p>lineType ∈ {电力, 通信, 给水, 排水, 热力, 燃气}；
- * pressureLevel ∈ {高压, 中压, 低压}（给水/排水等可不填）；
- * status ∈ {在用, 检修}。</p>
+ * pressureLevel ∈ {高压, 中压, 低压}：电力/给水/燃气/热力必须标注（热力不得为高压），
+ * 通信/排水为无压管线必须为 null；
+ * status ∈ {在用, 检修}。
+ * 每条管线按「类型 × 压力级制」矩阵占用舱段舱位（见 Dict#slotOf）。</p>
  */
 @Getter
 @Setter

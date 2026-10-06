@@ -211,6 +211,41 @@ public final class Dict {
     public static final List<String> SEGMENT_SHAPES = List.of("圆形", "矩形", "马蹄形");
     public static final List<String> SEGMENT_STATUSES = List.of("运营", "维护", "停用");
 
+    // ---------------- 综合管廊：舱段容量与管线规格兼容规则 ----------------
+    /** 新建舱段默认舱容（容量舱位），单舱段舱容必须为正数 */
+    public static final int DEFAULT_SEGMENT_CAPACITY = 8;
+
+    /** 无压力级制时（通信 / 排水固定占 1 舱位）的占用矩阵键 */
+    private static final String NO_PRESSURE = "-";
+
+    /**
+     * 管线「类型 × 压力级制 → 占用舱位」矩阵。
+     * 通信、排水为无压管线，固定占用 1 舱位；其余按压力级制分级：
+     * 电力 2/1/1，给水 3/2/1，热力 2/1（热力不允许高压），燃气 4/3/2。
+     */
+    private static final Map<String, Map<String, Integer>> SLOT_MATRIX = Map.of(
+            "电力", Map.of("高压", 2, "中压", 1, "低压", 1),
+            "通信", Map.of(NO_PRESSURE, 1),
+            "给水", Map.of("高压", 3, "中压", 2, "低压", 1),
+            "排水", Map.of(NO_PRESSURE, 1),
+            "热力", Map.of("中压", 2, "低压", 1),
+            "燃气", Map.of("高压", 4, "中压", 3, "低压", 2));
+
+    /** 必须标注压力级制的压力管线：电力 / 给水 / 燃气 / 热力（热力仅不可为高压） */
+    public static final List<String> PRESSURE_REQUIRED_TYPES = List.of("电力", "给水", "燃气", "热力");
+
+    /** 无压管线，禁止填写压力级制：通信 / 排水 */
+    public static final List<String> PRESSURE_FORBIDDEN_TYPES = List.of("通信", "排水");
+
+    /** 各类型允许的最大管径（毫米），超出即规格不兼容 */
+    private static final Map<String, Integer> MAX_DIAMETER_MM = Map.of(
+            "电力", 1600,
+            "通信", 400,
+            "给水", 1200,
+            "排水", 2000,
+            "热力", 1000,
+            "燃气", 800);
+
     // ---------------- 综合管廊：巡检异常 / 风险事件 ----------------
     /** 发现对象类型：风险事件只能从巡检点或附属设备登记 */
     public static final List<String> RISK_SOURCE_TYPES = List.of("巡检点", "附属设备");
@@ -419,6 +454,41 @@ public final class Dict {
 
     public static boolean isValidPressureLevel(String level) {
         return level != null && !level.isBlank() && PRESSURE_LEVELS.contains(level);
+    }
+
+    /** 该类型管线是否必须标注压力级制（电力 / 给水 / 燃气） */
+    public static boolean isPressureRequired(String lineType) {
+        return PRESSURE_REQUIRED_TYPES.contains(lineType);
+    }
+
+    /** 该类型管线是否为无压管线、禁止填写压力级制（通信 / 排水 / 热力） */
+    public static boolean isPressureForbidden(String lineType) {
+        return PRESSURE_FORBIDDEN_TYPES.contains(lineType);
+    }
+
+    /**
+     * 按「管线类型 × 压力级制」计算占用舱位。
+     *
+     * @return 占用舱位；类型/压力级制组合不允许（如热力-高压）时返回 -1
+     */
+    public static int slotOf(String lineType, String pressureLevel) {
+        Map<String, Integer> byLevel = SLOT_MATRIX.get(lineType);
+        if (byLevel == null) {
+            return -1;
+        }
+        String key = isPressureForbidden(lineType) ? NO_PRESSURE : pressureLevel;
+        Integer slots = byLevel.get(key);
+        return slots == null ? -1 : slots;
+    }
+
+    /** 该类型管线允许的最大管径（毫米） */
+    public static int maxDiameterMm(String lineType) {
+        return MAX_DIAMETER_MM.getOrDefault(lineType, Integer.MAX_VALUE);
+    }
+
+    /** 舱容合法：非 null 且为正整数 */
+    public static boolean isValidCapacity(Integer capacity) {
+        return capacity != null && capacity > 0;
     }
 
     public static boolean isValidPipelineStatus(String status) {

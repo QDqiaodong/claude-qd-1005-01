@@ -16,7 +16,8 @@ import com.utility.tunnel.mapper.TunnelSegmentMapper;
 /**
  * 廊体舱段业务。
  *
- * <p>核心规则：新建舱段长度 lengthM 必须大于 0；断面形状与状态需在字典范围内。
+ * <p>核心规则：新建舱段长度 lengthM 必须大于 0、舱容 capacitySlots（容量舱位上限）
+ * 必须为正整数；断面形状与状态需在字典范围内。
  * 状态恢复闭环：舱段存在未解除风险事件时处于封控状态，
  * 不能从「维护/停用」恢复为「运营」。</p>
  */
@@ -63,6 +64,9 @@ public class TunnelSegmentService {
         if (input.getLengthM() == null || input.getLengthM() <= 0) {
             throw new BizException("舱段长度必须大于 0");
         }
+        if (!Dict.isValidCapacity(input.getCapacitySlots())) {
+            throw new BizException("舱容（容量舱位）必须为正整数");
+        }
         if (input.getShape() == null || !Dict.isValidSegmentShape(input.getShape())) {
             throw new BizException("断面形状不合法，应为：圆形 / 矩形 / 马蹄形");
         }
@@ -74,6 +78,7 @@ public class TunnelSegmentService {
         s.setSegName(input.getSegName() == null ? "" : input.getSegName().trim());
         s.setShape(input.getShape());
         s.setLengthM(input.getLengthM());
+        s.setCapacitySlots(input.getCapacitySlots());
         s.setStatus(input.getStatus());
         segmentMapper.insert(s);
         return s;

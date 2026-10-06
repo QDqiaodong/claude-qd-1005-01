@@ -34,9 +34,4 @@
         SELECT <include refid="Base_Column_List"/> FROM pipeline WHERE id = #{id}
     </select>
 
-    <select id="countBySegmentAndType" resultType="int">
-        SELECT COUNT(*) FROM pipeline
-        WHERE segment_id = #{segmentId} AND line_type = #{lineType}
-    </select>
-
 </mapper>

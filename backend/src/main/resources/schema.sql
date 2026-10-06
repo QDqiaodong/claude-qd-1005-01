@@ -29,6 +29,7 @@ CREATE TABLE tunnel_segment (
     seg_name VARCHAR(64),
     shape VARCHAR(16),
     length_m DECIMAL(10,2) NOT NULL,
+    capacity_slots INT NOT NULL,
     status VARCHAR(16) NOT NULL,
     created_at DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -88,16 +89,18 @@ CREATE TABLE risk_event (
 -- 种子数据（17 行，覆盖全部五个模块；演示「电力 + 燃气 防爆隔离」与「风险封控」规则场景）
 -- =====================================================================
 
-INSERT INTO tunnel_segment (id, seg_code, seg_name, shape, length_m, status, created_at) VALUES
-(1, 'SEG-01', '中央综合舱·北段', '矩形', 1200.00, '运营', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 90 DAY),
-(2, 'SEG-02', '中央综合舱·南段', '圆形',  980.00,  '运营', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 88 DAY),
-(3, 'SEG-03', '电力舱',          '矩形',  760.00,  '维护', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 80 DAY),
-(4, 'SEG-04', '燃气舱',          '马蹄形', 540.00,  '停用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 60 DAY);
+INSERT INTO tunnel_segment (id, seg_code, seg_name, shape, length_m, capacity_slots, status, created_at) VALUES
+(1, 'SEG-01', '中央综合舱·北段', '矩形', 1200.00, 6, '运营', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 90 DAY),
+(2, 'SEG-02', '中央综合舱·南段', '圆形',  980.00,  4, '运营', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 88 DAY),
+(3, 'SEG-03', '电力舱',          '矩形',  760.00, 8, '维护', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 80 DAY),
+(4, 'SEG-04', '燃气舱',          '马蹄形', 540.00,  8, '停用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 60 DAY);
 
+-- 占用舱位按「类型 × 压力级制」计算：SEG-01 电力高压2 + 通信1 = 3/6；SEG-02 排水1 = 1/4。
+-- 通信 / 排水为无压管线，pressure_level 必须为 NULL（规格兼容规则）。
 INSERT INTO pipeline (id, segment_id, line_type, diameter_mm, pressure_level, status, created_at) VALUES
 (1, 1, '电力', 300, '高压', '在用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 70 DAY),
-(2, 1, '通信', 100, '低压', '在用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 68 DAY),
-(3, 2, '排水', 500, '低压', '在用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 66 DAY),
+(2, 1, '通信', 100, NULL, '在用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 68 DAY),
+(3, 2, '排水', 500, NULL, '在用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 66 DAY),
 (4, 4, '燃气', 200, '中压', '在用', UTC_TIMESTAMP() + INTERVAL 8 HOUR - INTERVAL 55 DAY);
 
 INSERT INTO patrol_point (id, segment_id, point_code, location, last_patrol_at, created_at) VALUES

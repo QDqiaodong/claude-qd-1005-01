@@ -8,17 +8,18 @@
         <result column="seg_name" property="segName"/>
         <result column="shape" property="shape"/>
         <result column="length_m" property="lengthM"/>
+        <result column="capacity_slots" property="capacitySlots"/>
         <result column="status" property="status"/>
         <result column="created_at" property="createdAt"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, seg_code, seg_name, shape, length_m, status, created_at
+        id, seg_code, seg_name, shape, length_m, capacity_slots, status, created_at
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tunnel_segment (seg_code, seg_name, shape, length_m, status, created_at)
-        VALUES (#{segCode}, #{segName}, #{shape}, #{lengthM}, #{status}, UTC_TIMESTAMP())
+        INSERT INTO tunnel_segment (seg_code, seg_name, shape, length_m, capacity_slots, status, created_at)
+        VALUES (#{segCode}, #{segName}, #{shape}, #{lengthM}, #{capacitySlots}, #{status}, UTC_TIMESTAMP())
     </insert>
 
     <select id="findAll" resultMap="SegmentResult">
@@ -69,6 +70,7 @@
         <result column="s_seg_name" property="segName"/>
         <result column="s_shape" property="shape"/>
         <result column="s_length_m" property="lengthM"/>
+        <result column="s_capacity_slots" property="capacitySlots"/>
         <result column="s_status" property="status"/>
         <collection property="pipelines" ofType="com.utility.tunnel.entity.Pipeline"
                     resultMap="PipelineInline"/>
@@ -109,6 +111,7 @@
             s.seg_name      AS s_seg_name,
             s.shape         AS s_shape,
             s.length_m      AS s_length_m,
+            s.capacity_slots AS s_capacity_slots,
             s.status        AS s_status,
             p.id            AS p_id,
             p.segment_id    AS p_segment_id,

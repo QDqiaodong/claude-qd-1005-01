@@ -23,6 +23,7 @@ public class SegmentWithChildren {
     private String segName;
     private String shape;
     private Double lengthM;
+    private Integer capacitySlots;
     private String status;
 
     private List<Pipeline> pipelines = new ArrayList<>();

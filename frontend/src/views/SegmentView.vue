@@ -17,7 +17,7 @@ const dialog = ref(false)
 const saving = ref(false)
 const form = ref(blank())
 function blank() {
-  return { segCode: '', segName: '', shape: '矩形', lengthM: '', status: '运营' }
+  return { segCode: '', segName: '', shape: '矩形', lengthM: '', capacitySlots: 8, status: '运营' }
 }
 
 const detail = ref(null)
@@ -54,9 +54,9 @@ function openCreate() { form.value = blank(); dialog.value = true; tip.value = '
 async function save() {
   saving.value = true; error.value = ''
   try {
-    const d = { ...form.value, lengthM: Number(form.value.lengthM) }
+    const d = { ...form.value, lengthM: Number(form.value.lengthM), capacitySlots: Number(form.value.capacitySlots) }
     await api.createSegment(d)
-    tip.value = `舱段 ${d.segCode} 已建档`
+    tip.value = `舱段 ${d.segCode} 已建档（舱容 ${d.capacitySlots} 舱位）`
     dialog.value = false
     await Promise.all([load(), refreshHealth()])
   } catch (e) { error.value = e.message } finally { saving.value = false }
@@ -88,7 +88,7 @@ onMounted(load)
     <div class="panel">
       <div class="panel-head">
         <span class="panel-title">廊体舱段</span>
-        <span class="panel-desc">新建舱段长度须 &gt; 0；存在未解除风险事件的舱段被封控，不能恢复运营</span>
+        <span class="panel-desc">新建舱段长度须 &gt; 0、舱容为正整数；存在未解除风险事件的舱段被封控，不能恢复运营</span>
       </div>
 
       <div v-if="error" class="err">{{ error }}</div>
@@ -114,6 +114,7 @@ onMounted(load)
         <el-table-column prop="segName" label="名称" min-width="150" />
         <el-table-column prop="shape" label="断面" width="100" />
         <el-table-column prop="lengthM" label="长度(m)" width="110" />
+        <el-table-column prop="capacitySlots" label="舱容(舱位)" width="110" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === '运营' ? 'success' : row.status === '维护' ? 'warning' : 'info'">{{ row.status }}</el-tag>
@@ -149,6 +150,9 @@ onMounted(load)
           </el-select>
         </el-form-item>
         <el-form-item label="长度(m)"><el-input v-model="form.lengthM" type="number" step="0.1" /></el-form-item>
+        <el-form-item label="舱容(舱位)">
+          <el-input v-model="form.capacitySlots" type="number" step="1" min="1" placeholder="容量舱位上限，正整数" />
+        </el-form-item>
         <el-form-item label="状态" class="full">
           <el-radio-group v-model="form.status">
             <el-radio v-for="s in statuses" :key="s" :value="s">{{ s }}</el-radio>
@@ -164,7 +168,7 @@ onMounted(load)
     <el-dialog v-model="detailOpen" title="舱段子项（嵌套查询）" width="880px">
       <div v-if="detail">
         <div class="panel-desc" style="margin-bottom:8px">
-          {{ detail.segCode }} · {{ detail.segName }} · {{ detail.shape }} · 长度 {{ detail.lengthM }}m · {{ detail.status }}
+          {{ detail.segCode }} · {{ detail.segName }} · {{ detail.shape }} · 长度 {{ detail.lengthM }}m · 舱容 {{ detail.capacitySlots }} 舱位 · {{ detail.status }}
         </div>
         <div class="panel-title" style="margin:10px 0 4px">入廊管线（{{ detail.pipelines.length }}）</div>
         <el-table :data="detail.pipelines" border size="small">
